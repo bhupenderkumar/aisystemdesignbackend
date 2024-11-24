@@ -1,6 +1,7 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import GeminiService from '../services/geminiService';
-import { SystemDesignResponse } from '../types';
+import { SystemDesignResponse } from '../types/systemDesign';
+import { ConversationStorage } from '../interfaces/ConversationStorage';
 
 const router = express.Router();
 const geminiService = new GeminiService();
@@ -8,7 +9,7 @@ const geminiService = new GeminiService();
 // Generate system design
 router.post('/generate', async (req: Request, res: Response) => {
   try {
-    const userId = req.header('x-user-id');
+    const userId = req.headers['x-user-id'] as string;
     if (!userId) {
       return res.status(401).json({ error: 'User ID is required' });
     }
@@ -33,17 +34,17 @@ router.post('/generate', async (req: Request, res: Response) => {
     }
 
     // Process the design request
-    const response = await generateDesignResponse(messages);
+    const response = await geminiService.generateDesignResponse(messages);
     
     res.json({ response });
   } catch (error) {
     console.error('Error processing design request:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Generate system diagram
-router.post('/generate-diagram', async (req, res) => {
+router.post('/generate-diagram', async (req: Request, res: Response) => {
     try {
         const userId = req.headers['x-user-id'] as string || req.body.userId;
         const { messages } = req.body;
@@ -58,7 +59,7 @@ router.post('/generate-diagram', async (req, res) => {
 
         // Store all messages in conversation history
         for (const message of messages) {
-            await geminiService.storage.addMessage(userId, message);
+            await (geminiService.storage as ConversationStorage).addMessage(userId, message);
         }
 
         // Get the latest user message
@@ -71,14 +72,14 @@ router.post('/generate-diagram', async (req, res) => {
         res.json(diagram);
     } catch (error) {
         console.error('Error in generate-diagram endpoint:', error);
-        res.status(500).json({ 
+        return res.status(500).json({ 
             error: error instanceof Error ? error.message : 'Failed to generate system diagram' 
         });
     }
 });
 
 // Generate suggested questions
-router.post('/generate-questions', async (req, res) => {
+router.post('/generate-questions', async (req: Request, res: Response) => {
     try {
         const userId = req.headers['x-user-id'] as string || req.body.userId;
         const { messages } = req.body;
@@ -93,7 +94,7 @@ router.post('/generate-questions', async (req, res) => {
 
         // Store all messages in conversation history
         for (const message of messages) {
-            await geminiService.storage.addMessage(userId, message);
+            await (geminiService.storage as ConversationStorage).addMessage(userId, message);
         }
 
         // Get the latest user message
@@ -106,7 +107,7 @@ router.post('/generate-questions', async (req, res) => {
         res.json(questions);
     } catch (error) {
         console.error('Error in generate-questions endpoint:', error);
-        res.status(500).json({ 
+        return res.status(500).json({ 
             error: error instanceof Error ? error.message : 'Failed to generate suggested questions' 
         });
     }
@@ -115,7 +116,7 @@ router.post('/generate-questions', async (req, res) => {
 // Delete conversation
 router.delete('/conversation/:id', async (req: Request, res: Response) => {
   try {
-    const userId = req.header('x-user-id');
+    const userId = req.headers['x-user-id'] as string;
     if (!userId) {
       return res.status(401).json({ error: 'User ID is required' });
     }
@@ -126,12 +127,12 @@ router.delete('/conversation/:id', async (req: Request, res: Response) => {
     }
 
     // Delete the conversation from storage
-    await geminiService.storage.deleteConversation(userId, conversationId);
+    await (geminiService.storage as ConversationStorage).deleteConversation(userId, conversationId);
 
     res.json({ message: 'Conversation deleted successfully' });
   } catch (error) {
     console.error('Error deleting conversation:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

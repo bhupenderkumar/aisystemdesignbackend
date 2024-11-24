@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
-import { SystemDesignResponse } from '../types';
+import { SystemDesignResponse } from '../types/systemDesign';
 import { ConversationStorage, ConversationMessage } from '../interfaces/ConversationStorage';
 import { RedisConversationStorage } from './RedisConversationStorage';
 import { InMemoryConversationStorage } from './InMemoryConversationStorage';
@@ -269,6 +269,30 @@ Guidelines for questions:
             return result;
         } catch (error) {
             console.error('Error generating suggested questions:', error);
+            throw error;
+        }
+    }
+
+    public async generateDesignResponse(messages: ConversationMessage[]): Promise<SystemDesignResponse> {
+        try {
+            const latestMessage = messages[messages.length - 1];
+            if (!latestMessage || latestMessage.role !== 'user') {
+                throw new Error('Invalid message format');
+            }
+
+            const prompt = await this.generatePrompt('', latestMessage.content);
+            const result = await this.model.generateContent(prompt);
+            const response = result.response;
+            const text = response.text();
+
+            const designResponse: SystemDesignResponse = {
+                content: text,
+                timestamp: new Date().toISOString()
+            };
+
+            return designResponse;
+        } catch (error) {
+            console.error('Error generating design response:', error);
             throw error;
         }
     }

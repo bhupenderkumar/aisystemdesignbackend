@@ -22,7 +22,10 @@ class InMemoryConversationStorage {
                 const conversation = this.conversations.get(userId) || [];
                 // Filter out expired messages
                 const now = Date.now();
-                const validMessages = conversation.filter(msg => (now - msg.timestamp.getTime()) < this.conversationTTL);
+                const validMessages = conversation.filter(msg => {
+                    const timestamp = msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp);
+                    return (now - timestamp.getTime()) < this.conversationTTL;
+                });
                 // Update the conversation if we removed expired messages
                 if (validMessages.length !== conversation.length) {
                     this.conversations.set(userId, validMessages);
@@ -38,12 +41,14 @@ class InMemoryConversationStorage {
     addMessage(userId, message) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                // Ensure timestamp is a Date object
+                const messageWithDateTimestamp = Object.assign(Object.assign({}, message), { timestamp: message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp) });
                 const conversation = yield this.getConversation(userId);
                 // Keep only last 10 messages to prevent context from growing too large
                 if (conversation.length >= 10) {
                     conversation.shift();
                 }
-                conversation.push(message);
+                conversation.push(messageWithDateTimestamp);
                 this.conversations.set(userId, conversation);
                 console.log(`Added message for user ${userId}. Total messages: ${conversation.length}`);
             }
@@ -61,6 +66,18 @@ class InMemoryConversationStorage {
             }
             catch (error) {
                 console.error('Error clearing conversation:', error);
+                throw error;
+            }
+        });
+    }
+    deleteConversation(userId, conversationId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                // For in-memory storage, we'll just clear the conversation
+                yield this.clearConversation(userId);
+            }
+            catch (error) {
+                console.error('Error deleting conversation:', error);
                 throw error;
             }
         });

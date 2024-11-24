@@ -8,4 +8,5 @@ export interface ConversationStorage {
     getConversation(userId: string): Promise<ConversationMessage[]>;
     addMessage(userId: string, message: ConversationMessage): Promise<void>;
     clearConversation(userId: string): Promise<void>;
+    deleteConversation(userId: string, conversationId: string): Promise<void>;
 }

@@ -1,11 +1,13 @@
 export interface SystemDesignResponse {
-    overview: {
+    content: string;
+    timestamp: string;
+    overview?: {
         description: string;
         objectives: string[];
         users: string;
         scale: string;
     };
-    components: Array<{
+    components?: Array<{
         name: string;
         type: string;
         purpose: string;
@@ -14,7 +16,7 @@ export interface SystemDesignResponse {
         interactions: string[];
         icon?: string;
     }>;
-    dataFlow: {
+    dataFlow?: {
         steps: string[];
         apis: Array<{
             endpoint: string;
@@ -23,7 +25,7 @@ export interface SystemDesignResponse {
         }>;
         patterns: string[];
     };
-    technicalSpecs: {
+    technicalSpecs?: {
         languages: string[];
         frameworks: string[];
         databases: string[];
@@ -33,20 +35,20 @@ export interface SystemDesignResponse {
         cdn: string;
         icon?: string;
     };
-    nonFunctionalReqs: {
+    nonFunctionalReqs?: {
         scalability: string[];
         security: string[];
         performance: string[];
         reliability: string[];
         consistency: string;
     };
-    designDecisions: Array<{
+    designDecisions?: Array<{
         decision: string;
         rationale: string;
         tradeoffs: string[];
         alternatives: string[];
     }>;
-    assumptions: Array<{
+    assumptions?: Array<{
         category: string;
         details: string[];
     }>;

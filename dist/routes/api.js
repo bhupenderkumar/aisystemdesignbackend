@@ -35,18 +35,26 @@ const ensureUserId = (req, res, next) => {
 };
 router.post('/design/generate', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { prompt, context } = req.body;
+        const { messages } = req.body;
         const userId = req.headers['x-user-id'];
-        if (!prompt) {
-            return res.status(400).json({ error: 'Prompt is required' });
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            return res.status(400).json({ error: 'Messages array is required' });
+        }
+        // Get the latest user message
+        const latestMessage = messages[messages.length - 1];
+        if (latestMessage.role !== 'user') {
+            return res.status(400).json({ error: 'Last message must be from user' });
         }
         console.log('Received request:', {
             userId,
-            prompt,
-            context,
+            messages,
             headers: req.headers
         });
-        const systemDesign = yield geminiService.generateSystemDesign(userId, prompt, context);
+        // Store all messages in conversation history
+        for (const message of messages) {
+            yield geminiService.storage.addMessage(userId, message);
+        }
+        const systemDesign = yield geminiService.generateSystemDesign(userId, latestMessage.content);
         res.json({
             success: true,
             data: systemDesign
@@ -56,7 +64,67 @@ router.post('/design/generate', (req, res) => __awaiter(void 0, void 0, void 0, 
         console.error('Error in generate-system-design endpoint:', error);
         res.status(500).json({
             success: false,
-            error: error instanceof Error ? error.message : 'An unexpected error occurred'
+            error: error instanceof Error ? error.message : 'Internal server error'
+        });
+    }
+}));
+router.post('/design/generate-diagram', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { messages } = req.body;
+        const userId = req.headers['x-user-id'];
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            return res.status(400).json({ error: 'Messages array is required' });
+        }
+        // Get the latest user message
+        const latestMessage = messages[messages.length - 1];
+        if (latestMessage.role !== 'user') {
+            return res.status(400).json({ error: 'Last message must be from user' });
+        }
+        // Store all messages in conversation history
+        for (const message of messages) {
+            yield geminiService.storage.addMessage(userId, message);
+        }
+        const diagram = yield geminiService.generateSystemDiagram(userId, latestMessage.content);
+        res.json({
+            success: true,
+            data: diagram
+        });
+    }
+    catch (error) {
+        console.error('Error in generate-diagram endpoint:', error);
+        res.status(500).json({
+            success: false,
+            error: error instanceof Error ? error.message : 'Internal server error'
+        });
+    }
+}));
+router.post('/design/generate-questions', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { messages } = req.body;
+        const userId = req.headers['x-user-id'];
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            return res.status(400).json({ error: 'Messages array is required' });
+        }
+        // Get the latest user message
+        const latestMessage = messages[messages.length - 1];
+        if (latestMessage.role !== 'user') {
+            return res.status(400).json({ error: 'Last message must be from user' });
+        }
+        // Store all messages in conversation history
+        for (const message of messages) {
+            yield geminiService.storage.addMessage(userId, message);
+        }
+        const questions = yield geminiService.generateSuggestedQuestions(userId, latestMessage.content);
+        res.json({
+            success: true,
+            data: questions
+        });
+    }
+    catch (error) {
+        console.error('Error in generate-questions endpoint:', error);
+        res.status(500).json({
+            success: false,
+            error: error instanceof Error ? error.message : 'Internal server error'
         });
     }
 }));

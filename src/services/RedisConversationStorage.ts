@@ -69,4 +69,14 @@ export class RedisConversationStorage implements ConversationStorage {
             throw error;
         }
     }
+
+    async deleteConversation(userId: string, conversationId: string): Promise<void> {
+        try {
+            const key = this.getKey(userId);
+            await this.redis.del(key);
+        } catch (error) {
+            console.error('Error deleting conversation:', error);
+            throw error;
+        }
+    }
 }

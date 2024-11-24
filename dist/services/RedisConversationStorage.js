@@ -82,5 +82,17 @@ class RedisConversationStorage {
             }
         });
     }
+    deleteConversation(userId, conversationId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const key = this.getKey(userId);
+                yield this.redis.del(key);
+            }
+            catch (error) {
+                console.error('Error deleting conversation:', error);
+                throw error;
+            }
+        });
+    }
 }
 exports.RedisConversationStorage = RedisConversationStorage;

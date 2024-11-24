@@ -66,4 +66,14 @@ export class InMemoryConversationStorage implements ConversationStorage {
             throw error;
         }
     }
+
+    async deleteConversation(userId: string, conversationId: string): Promise<void> {
+        try {
+            // For in-memory storage, we'll just clear the conversation
+            await this.clearConversation(userId);
+        } catch (error) {
+            console.error('Error deleting conversation:', error);
+            throw error;
+        }
+    }
 }
